@@ -1,24 +1,49 @@
 package com.raihanorium.javaconcurrency.web;
 
+import com.raihanorium.javaconcurrency.constants.Path;
+import com.raihanorium.javaconcurrency.files.FileGeneratorService;
+import com.raihanorium.javaconcurrency.utils.StreamUtils;
+import jakarta.annotation.Nonnull;
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.log4j.Log4j2;
 import org.apache.commons.fileupload2.core.DiskFileItem;
 import org.apache.commons.fileupload2.core.DiskFileItemFactory;
 import org.apache.commons.fileupload2.core.FileUploadException;
 import org.apache.commons.fileupload2.jakarta.JakartaServletDiskFileUpload;
 import org.apache.commons.fileupload2.jakarta.JakartaServletFileUpload;
 import org.apache.commons.io.IOUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.*;
 
 import java.io.*;
 
+@Log4j2
 @Controller
+@RequiredArgsConstructor(onConstructor_ = @Autowired)
 public class FileUploadController {
+
+    private static final String GENERATE_VIEW = "generate";
+    private static final String MESSAGE = "message";
+    private static final String TEMP_FILE_NAME = "contacts.csv";
+    private static final String FILE_PRESENT = "filePresent";
+    private static final String GENERATE_FILE_SUCCESS = "File generated. Time taken: %s s.";
+    public static final String GENERATE_FILE_ERROR = "Error generating file.";
+
+    @Nonnull
+    private final FileGeneratorService fileGeneratorService;
+
+
+    @GetMapping
+    public String uploaderPage(Model model) {
+        model.addAttribute("name", "hello");
+        return "uploader";
+    }
+
     @PostMapping(value = "/upload")
     public @ResponseBody ResponseEntity<String> upload(HttpServletRequest request) {
         long start = System.currentTimeMillis();
@@ -79,24 +104,24 @@ public class FileUploadController {
         return ResponseEntity.ok("Success. Time taken: " + ((System.currentTimeMillis() - start) / 1000) + " s.");
     }
 
-    @GetMapping(value = "/uploader")
-    public String uploaderPage(Model model) {
-        model.addAttribute("name", "hello");
-        return "uploader";
+    @GetMapping(Path.GENERATE)
+    public String showGenerate() {
+        return GENERATE_VIEW;
     }
 
-    @GetMapping(value = "/generate/{lineCount}")
-    public ResponseEntity<String> generate(@PathVariable long lineCount) {
+    @PostMapping(value = Path.GENERATE)
+    public String generate(@RequestParam Integer lines, Model model) {
         long start = System.currentTimeMillis();
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter("contacts.csv", false))) {
-            for (int i = 0; i < lineCount; i++) {
-                int number = i + 1;
-                writer.write(String.format("First Name %s,Last Name %s,Organization %s,Tel %s,Tel %s,Mobile %s,Email %s,Address %s,Note %s", number, number, number, number, number, number, number, number, number));
-                writer.newLine();
-            }
-        } catch (IOException ex) {
-            return ResponseEntity.ok("Error generating file.\n" + ex);
-        }
-        return ResponseEntity.ok("Success. Time taken: " + ((System.currentTimeMillis() - start) / 1000) + " s.");
+        boolean generated = fileGeneratorService.generate(lines, TEMP_FILE_NAME);
+        String message = generated ? String.format(GENERATE_FILE_SUCCESS, ((System.currentTimeMillis() - start) / 1000)) : GENERATE_FILE_ERROR;
+        model.addAttribute(FILE_PRESENT, generated);
+        model.addAttribute(MESSAGE, message);
+        return GENERATE_VIEW;
+    }
+
+    @GetMapping(Path.DOWNLOAD)
+    public ResponseEntity<InputStreamResource> downloadGeneratedFile() {
+        return StreamUtils.getDownloadStream(new File(TEMP_FILE_NAME))
+                .orElseGet(() -> ResponseEntity.noContent().build());
     }
 }
