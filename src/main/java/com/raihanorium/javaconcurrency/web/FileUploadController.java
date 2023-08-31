@@ -37,36 +37,37 @@ public class FileUploadController {
                     System.out.println("Form field " + name + " detected.");
                 } else {
                     System.out.println("File field " + name + " with file name " + item.getName() + " detected.");
-                    File directory = new File("contacts");
 
-                    boolean dirFound = true;
+                    String filename = item.getName();
+                    OutputStream out = new FileOutputStream(filename);
+                    IOUtils.copyLarge(stream, out);
+                    stream.close();
+                    out.close();
+
+                    System.out.println("File uploaded, now processing.");
+
+                    File directory = new File("contacts");
                     if (!directory.exists()) {
-                        dirFound = directory.mkdir();
+                        directory.mkdir();
+                    } else {
+                        directory.delete();
                     }
 
-                    if (dirFound) {
-                        String filename = item.getName();
-                        OutputStream out = new FileOutputStream(filename);
-                        IOUtils.copyLarge(stream, out);
-                        stream.close();
-                        out.close();
-
-                        System.out.println("File uploaded, now processing.");
-
-                        BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(filename)));
-                        String strLine;
-                        long count = 0;
-                        while ((strLine = br.readLine()) != null) {
-                            long number = count + 1;
-                            try (BufferedWriter writer = new BufferedWriter(new FileWriter("contacts/contact" + number + ".vcf", false))) {
-                                writer.write(strLine);
-                            } catch (IOException ex) {
-                                ex.printStackTrace();
-                            } finally {
-                                count++;
-                            }
+                    BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(filename)));
+                    String strLine;
+                    long count = 0;
+                    while ((strLine = br.readLine()) != null) {
+                        File currentDirectory = new File(directory, String.valueOf(count / 1000));
+                        currentDirectory.mkdirs();
+                        try (BufferedWriter writer = new BufferedWriter(new FileWriter(new File(currentDirectory, "contact" + count + ".vcf"), false))) {
+                            writer.write(strLine);
+                        } catch (IOException ex) {
+                            ex.printStackTrace();
+                        } finally {
+                            count++;
                         }
                     }
+
                 }
             });
         } catch (FileUploadException e) {
