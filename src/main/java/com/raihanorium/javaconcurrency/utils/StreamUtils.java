@@ -1,14 +1,13 @@
 package com.raihanorium.javaconcurrency.utils;
 
 import lombok.extern.log4j.Log4j2;
+import org.apache.commons.io.IOUtils;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
+import java.io.*;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Optional;
@@ -36,5 +35,15 @@ public class StreamUtils {
             }
         }
         return Optional.empty();
+    }
+
+    public static boolean uploadInputStream(InputStream inputStream, String filename) {
+        try (OutputStream outputStream = new FileOutputStream(filename)) {
+            IOUtils.copyLarge(inputStream, outputStream);
+        } catch (IOException e) {
+            log.error(e.getMessage(), e);
+            return false;
+        }
+        return true;
     }
 }
