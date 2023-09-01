@@ -1,23 +1,43 @@
 <!DOCTYPE HTML>
 <html lang="en"
       xmlns:th="http://www.thymeleaf.org"
-      th:replace="layout :: layout(~{::title}, ~{::section})"
+      th:replace="~{layout :: layout(~{::title}, ~{::section})}"
 >
 <head>
-  <title>File Uploader</title>
+  <title>Contacts Importer</title>
 </head>
 
 <body>
 <section>
   <main>
     <div class="container">
-      <div class="mt-1 alert alert-dark" role="alert" th:if="${message != null}" th:text="${message}"/>
+      <div class="alert alert-primary" role="alert" th:if="${message != null}" th:text="${message}"/>
 
-      <h1>Upload large file</h1>
+      <div class="p-5 mb-4 bg-light rounded-3">
+        <div class="container-fluid py-5">
+          <h1 class="display-5 fw-bold">Contacts Importer</h1>
+          <p class="fs-4">A java program to import contacts from .csv file and save them in .vcf format in the disk.</p>
+
+          <ul>
+            <li>A dummy file can be generated from <a href="/generate">here</a>. Input how many lines of csv you want and submit.</li>
+            <li>Upload a <code>.csv</code> file here and submit. The file will be first uploaded in the server and then processed concurrently.</li>
+            <li>Number of the threads can be defined in the <code>Constants</code> file in the <code>THREAD_POOL_SIZE</code> field.</li>
+            <li>The <code>PhysicalStorageFileProcessingStrategy</code> class is an implementation of the <code>FileProcessingStrategy</code> interface.</li>
+            <li>The file processing strategy is hot swappable by any other strategy like <code>DataStorageFileProcessingStrategy</code> which will save the contacts in database.</li>
+            <li>The file upload and file processing logic is separated by an event publisher and listener.</li>
+            <li><code>Streams</code> are used when downloading and uploading files so that it doesn't eat up memory. This enables working with large files.</li>
+            <li>Current implementation will create lots of files in the disk in the <code>contacts</code> directory. Beware of them!!</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>Upload contacts csv file</h3>
 
       <form method="POST" enctype="multipart/form-data" action="/upload">
-        <input type="file" name="file"><br><br>
-        <input type="submit" value="Upload">
+        <div class="form-group mb-3">
+          <input type="file" name="file" required class="form-control" id="file">
+        </div>
+        <button type="submit" class="btn btn-primary">Submit</button>
       </form>
     </div>
   </main>

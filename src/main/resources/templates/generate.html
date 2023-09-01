@@ -1,7 +1,7 @@
 <!DOCTYPE HTML>
 <html lang="en"
       xmlns:th="http://www.thymeleaf.org"
-      th:replace="layout :: layout(~{::title}, ~{::section})"
+      th:replace="~{layout :: layout(~{::title}, ~{::section})}"
 >
 <head>
   <title>Generate</title>
@@ -11,17 +11,19 @@
 <section>
   <main>
     <div class="container">
-      <div class="mt-1 alert alert-dark" role="alert" th:if="${message != null}" th:text="${message}"/>
-      <div class="mt-1 alert alert-info" role="alert" th:if="${filePresent != null}">
-        <a href="/download">Click here to download the generated file</a>
+      <div class="alert alert-primary" role="alert" th:if="${message != null}" th:text="${message}"/>
+      <div class="alert alert-primary" role="alert" th:if="${fileName != null}">
+        <a th:href="@{|/download/${fileName}}">Click here to download the generated file</a>
       </div>
 
-      <h1>Generate Large File</h1>
+      <h3>Generate Large File</h3>
 
       <form method="POST" action="/generate">
-        <label for="lines">Number of lines:</label>
-        <input type="text" id="lines" name="lines"/><br><br>
-        <input type="submit" value="Generate">
+        <div class="form-group mb-3">
+          <label for="lines">Number of lines</label>
+          <input type="number" name="lines" required class="form-control" id="lines">
+        </div>
+        <button type="submit" class="btn btn-primary">Submit</button>
       </form>
     </div>
   </main>

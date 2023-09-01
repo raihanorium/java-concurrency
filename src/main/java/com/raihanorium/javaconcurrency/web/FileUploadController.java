@@ -1,7 +1,7 @@
 package com.raihanorium.javaconcurrency.web;
 
 import com.raihanorium.javaconcurrency.constants.Constants;
-import com.raihanorium.javaconcurrency.constants.Path;
+import com.raihanorium.javaconcurrency.constants.Paths;
 import com.raihanorium.javaconcurrency.event.EventPublisher;
 import com.raihanorium.javaconcurrency.event.FileUploadedEvent;
 import com.raihanorium.javaconcurrency.files.FileGeneratorService;
@@ -18,26 +18,27 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 
 @Log4j2
 @Controller
 @RequiredArgsConstructor(onConstructor_ = @Autowired)
 public class FileUploadController {
 
-    public static final String UPLOADER_VIEW = "uploader";
+    private static final String UPLOADER_VIEW = "uploader";
     private static final String GENERATE_VIEW = "generate";
     private static final String MESSAGE = "message";
-    private static final String FILE_PRESENT = "filePresent";
-    private static final String UPLOAD_FILE_SUCCESS = "File uploaded. Processing going on in the background. Time taken: %s ms. Memory usage: %s mb.";
-    public static final String UPLOAD_FILE_ERROR = "Error uploading file.";
-    private static final String GENERATE_FILE_SUCCESS = "File generated. Time taken: %s s.";
-    public static final String GENERATE_FILE_ERROR = "Error generating file.";
-    public static final String NOT_A_MULTIPART_REQUEST = "Not a multipart request.";
+    private static final String FILE_NAME = "fileName";
+    private static final String UPLOAD_FILE_SUCCESS = "File processing completed. Time taken: %s ms. Memory usage: %s mb.";
+    private static final String UPLOAD_FILE_ERROR = "Error uploading file.";
+    private static final String GENERATE_FILE_SUCCESS = "File generated.";
+    private static final String GENERATE_FILE_ERROR = "Error generating file.";
+    private static final String NOT_A_MULTIPART_REQUEST = "Not a multipart request.";
 
     @Nonnull
     private final FileGeneratorService fileGeneratorService;
@@ -50,7 +51,7 @@ public class FileUploadController {
         return UPLOADER_VIEW;
     }
 
-    @PostMapping(value = Path.UPLOAD)
+    @PostMapping(value = Paths.UPLOAD)
     public String upload(HttpServletRequest request, Model model) {
         long start = System.currentTimeMillis();
 
@@ -79,24 +80,23 @@ public class FileUploadController {
         return UPLOADER_VIEW;
     }
 
-    @GetMapping(Path.GENERATE)
+    @GetMapping(Paths.GENERATE)
     public String showGenerate() {
         return GENERATE_VIEW;
     }
 
-    @PostMapping(value = Path.GENERATE)
+    @PostMapping(value = Paths.GENERATE)
     public String generate(@RequestParam Integer lines, Model model) {
-        long start = System.currentTimeMillis();
         boolean generated = fileGeneratorService.generate(lines, Constants.TEMP_FILE_NAME);
-        String message = generated ? String.format(GENERATE_FILE_SUCCESS, ((System.currentTimeMillis() - start) / 1000)) : GENERATE_FILE_ERROR;
-        model.addAttribute(FILE_PRESENT, generated);
+        String message = generated ? GENERATE_FILE_SUCCESS : GENERATE_FILE_ERROR;
+        model.addAttribute(FILE_NAME, Path.of(Constants.TEMP_FILE_NAME));
         model.addAttribute(MESSAGE, message);
         return GENERATE_VIEW;
     }
 
-    @GetMapping(Path.DOWNLOAD)
-    public ResponseEntity<InputStreamResource> downloadGeneratedFile() {
-        return StreamUtils.getDownloadStream(new File(Constants.TEMP_FILE_NAME))
+    @GetMapping(Paths.DOWNLOAD)
+    public ResponseEntity<InputStreamResource> downloadGeneratedFile(@PathVariable String fileName) {
+        return StreamUtils.getDownloadStream(Path.of(fileName).toFile())
                 .orElseGet(() -> ResponseEntity.noContent().build());
     }
 }

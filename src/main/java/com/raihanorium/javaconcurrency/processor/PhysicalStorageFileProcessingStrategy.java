@@ -12,13 +12,19 @@ import java.util.concurrent.TimeUnit;
 
 @Log4j2
 public class PhysicalStorageFileProcessingStrategy implements FileProcessingStrategy {
+
+    private static final String CONTACT_FILE_NAME_PATTERN = "contact%s.vcf";
+
     @Override
     public boolean process(String fileName) {
         try {
+            long start = System.currentTimeMillis();
             File root = new File(Constants.PHYSICAL_STORAGE_DIRECTORY);
             FileUtils.forceMkdir(root);
             FileUtils.cleanDirectory(root);
+            log.info("Output directory cleanup finished in {} ms.", System.currentTimeMillis() - start);
 
+            start = System.currentTimeMillis();
             ExecutorService executorService = Executors.newFixedThreadPool(Constants.THREAD_POOL_SIZE);
             BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(fileName)));
             String line;
@@ -32,19 +38,19 @@ public class PhysicalStorageFileProcessingStrategy implements FileProcessingStra
             if (executorService.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS)) {
                 executorService.shutdownNow();
             }
-        } catch (IOException | InterruptedException e) {
+            log.info("File processing finished in {} ms.", System.currentTimeMillis() - start);
+        } catch (Exception e) {
             throw new RuntimeException(e);
         }
         return true;
     }
 
-    private static Callable<File> createFileFromLine(final File root, final String line, final long index) {
+    private Callable<File> createFileFromLine(final File root, final String line, final long index) {
         return () -> {
             File directory = new File(root, String.valueOf(index / 1000));
             FileUtils.forceMkdir(directory);
-            File vcfFile = new File(directory, "contact" + index + ".vcf");
+            File vcfFile = new File(directory, String.format(CONTACT_FILE_NAME_PATTERN, index));
             try (BufferedWriter writer = new BufferedWriter(new FileWriter(vcfFile, false))) {
-                log.info("Writing file {} in thread {}", vcfFile.getName(), Thread.currentThread().getName());
                 writer.write(line);
             } catch (Exception ex) {
                 log.error(ex.getMessage(), ex);
