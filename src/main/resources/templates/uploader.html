@@ -11,6 +11,8 @@
 <section>
   <main>
     <div class="container">
+      <div class="mt-1 alert alert-dark" role="alert" th:if="${message != null}" th:text="${message}"/>
+
       <h1>Upload large file</h1>
 
       <form method="POST" enctype="multipart/form-data" action="/upload">

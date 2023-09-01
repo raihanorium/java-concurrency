@@ -20,7 +20,6 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
 
 import java.io.File;
 import java.io.IOException;
@@ -34,7 +33,7 @@ public class FileUploadController {
     private static final String GENERATE_VIEW = "generate";
     private static final String MESSAGE = "message";
     private static final String FILE_PRESENT = "filePresent";
-    private static final String UPLOAD_FILE_SUCCESS = "File uploaded. Processing going on in the background. Time taken: %s s.";
+    private static final String UPLOAD_FILE_SUCCESS = "File uploaded. Processing going on in the background. Time taken: %s ms. Memory usage: %s mb.";
     public static final String UPLOAD_FILE_ERROR = "Error uploading file.";
     private static final String GENERATE_FILE_SUCCESS = "File generated. Time taken: %s s.";
     public static final String GENERATE_FILE_ERROR = "Error generating file.";
@@ -52,7 +51,7 @@ public class FileUploadController {
     }
 
     @PostMapping(value = Path.UPLOAD)
-    public @ResponseBody String upload(HttpServletRequest request, Model model) {
+    public String upload(HttpServletRequest request, Model model) {
         long start = System.currentTimeMillis();
 
         if (!JakartaServletFileUpload.isMultipartContent(request)) {
@@ -75,7 +74,8 @@ public class FileUploadController {
             return UPLOADER_VIEW;
         }
 
-        model.addAttribute(MESSAGE, String.format(UPLOAD_FILE_SUCCESS, ((System.currentTimeMillis() - start) / 1000)));
+        long memoryUsage = (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / (1024 * 1024);
+        model.addAttribute(MESSAGE, String.format(UPLOAD_FILE_SUCCESS, (System.currentTimeMillis() - start), memoryUsage));
         return UPLOADER_VIEW;
     }
 
