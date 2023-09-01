@@ -34,7 +34,7 @@ public class FileUploadController {
     private static final String GENERATE_VIEW = "generate";
     private static final String MESSAGE = "message";
     private static final String FILE_NAME = "fileName";
-    private static final String UPLOAD_FILE_SUCCESS = "File processing completed. Time taken: %s ms. Memory usage: %s mb.";
+    private static final String UPLOAD_FILE_SUCCESS = "File processing completed.";
     private static final String UPLOAD_FILE_ERROR = "Error uploading file.";
     private static final String GENERATE_FILE_SUCCESS = "File generated.";
     private static final String GENERATE_FILE_ERROR = "Error generating file.";
@@ -53,8 +53,6 @@ public class FileUploadController {
 
     @PostMapping(value = Paths.UPLOAD)
     public String upload(HttpServletRequest request, Model model) {
-        long start = System.currentTimeMillis();
-
         if (!JakartaServletFileUpload.isMultipartContent(request)) {
             model.addAttribute(MESSAGE, NOT_A_MULTIPART_REQUEST);
             return UPLOADER_VIEW;
@@ -75,8 +73,7 @@ public class FileUploadController {
             return UPLOADER_VIEW;
         }
 
-        long memoryUsage = (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / (1024 * 1024);
-        model.addAttribute(MESSAGE, String.format(UPLOAD_FILE_SUCCESS, (System.currentTimeMillis() - start), memoryUsage));
+        model.addAttribute(MESSAGE, UPLOAD_FILE_SUCCESS);
         return UPLOADER_VIEW;
     }
 

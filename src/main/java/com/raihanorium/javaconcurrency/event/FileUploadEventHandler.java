@@ -16,9 +16,7 @@ public class FileUploadEventHandler {
     @EventListener
     public void onFileUpload(FileUploadedEvent event) {
         FileProcessor fileProcessor = new FileProcessor(new PhysicalStorageFileProcessingStrategy(), event.getFileName());
-        if (fileProcessor.process()) {
-            log.info("File processing success.");
-        } else {
+        if (!fileProcessor.process()) {
             log.error("Failed to process file.");
         }
     }
